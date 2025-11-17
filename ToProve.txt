@@ -1,0 +1,80 @@
+🧪 TXT: Pasos para probar que TODO funciona
+
+Guárdalo como CHECKLIST.txt si quieres.
+
+🧪 Pruebas completas de la práctica 3 (CHECKLIST)
+🔧 1. Arrancar el proyecto
+cd P3/docker
+docker compose up --build
+
+
+Esperar hasta ver:
+
+database system is ready to accept connections
+
+👤 2. Probar User Service
+Crear usuario:
+curl -X PUT http://localhost:5050/user \
+  -H "Content-Type: application/json" \
+  -d '{"name": "alice", "password": "1234"}'
+
+Login:
+curl -X POST http://localhost:5050/user \
+  -H "Content-Type: application/json" \
+  -d '{"name": "alice", "password": "1234"}'
+
+🎬 3. Probar catálogo
+Listado de películas:
+curl http://localhost:5051/movies
+
+Película por ID:
+curl http://localhost:5051/movies/1
+
+🛒 4. Probar carrito persistente
+Añadir película:
+curl -X PUT http://localhost:5051/cart/1 \
+  -H "Content-Type: application/json" \
+  -d '{"client_id": 2}'
+
+Ver carrito:
+curl "http://localhost:5051/cart?client_id=2"
+
+💰 5. Añadir crédito
+curl -X POST http://localhost:5051/user/credit \
+  -H "Content-Type: application/json" \
+  -d '{"client_id": 2, "amount": 100}'
+
+🧾 6. Checkout (aquí se activa el pg_sleep)
+curl -X POST http://localhost:5051/cart/checkout \
+  -H "Content-Type: application/json" \
+  -d '{"client_id": 2}'
+
+Durante los 10s de espera:
+
+En otra terminal, intenta:
+
+UPDATE clientes SET descuento_percent = 20 WHERE id = 2;
+
+
+→ Verás bloqueo o deadlock según el orden de las transacciones.
+
+📊 7. Probar /estadisticaVentas
+curl http://localhost:5051/estadisticaVentas/2024/Spain
+
+👥 8. Probar /clientesSinPedidos
+curl http://localhost:5051/clientesSinPedidos
+
+💥 9. Probar /borraPais y derivados
+Versión correcta:
+curl -X POST http://localhost:5051/borraPais/Spain
+
+Incorrecta:
+curl -X POST http://localhost:5051/borraPaisIncorrecto/Spain
+
+Intermedia:
+curl -X POST http://localhost:5051/borraPaisIntermedio/Spain
+
+
+Comprobar en BD que los efectos coinciden con la memoria.
+
+🎉 SI TODO ESTO FUNCIONA → PRÁCTICA PERFECTA
