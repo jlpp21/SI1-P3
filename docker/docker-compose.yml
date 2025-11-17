@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_si1_p3
+    environment:
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: alumnodb
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: si1
+    ports:
+      - "9999:5432"
+    volumes:
+      # Scripts SQL de la práctica (ruta relativa desde P3/docker)
+      - ../db/schema.sql:/sql/schema.sql
+      - ../db/populate.sql:/sql/populate.sql
+      - ../db/actualiza.sql:/sql/actualiza.sql
+
+      # init.sql que llama a los tres anteriores
+      - ./init.sql:/docker-entrypoint-initdb.d/0_init.sql
+
+      # Datos persistentes de PostgreSQL
+      - db_data:/var/lib/postgresql/data
+
+  user:
+    build:
+      context: ..
+      dockerfile: ./api/Dockerfile
+    container_name: user_service_p3
+    ports:
+      - "5050:5050"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://alumnodb:1234@db:5432/si1
+      - PYTHONPATH=/usr/src/app:/usr/src/app/db
+    depends_on:
+      - db
+    command: ["python", "user.py"]
+
+  catalog:
+    build:
+      context: ..
+      dockerfile: ./api/Dockerfile
+    container_name: catalog_service_p3
+    ports:
+      - "5051:5051"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://alumnodb:1234@db:5432/si1
+      - PYTHONPATH=/usr/src/app:/usr/src/app/db
+    depends_on:
+      - db
+    command: ["python", "api.py"]
+
+volumes:
+  db_data:
